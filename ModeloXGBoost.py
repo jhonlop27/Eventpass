@@ -20,8 +20,7 @@ y = df["Diagnosis"]  # El CSV ya guarda el diagnóstico como número: 0 = sin ap
 # 3. Dividir los registros en dos grupos con sus diagnósticos correspondientes
 X_train, X_test, y_train, y_test = train_test_split(
     X, y,             # Divide las filas de X junto con sus respuestas de y.
-    test_size=0.2,    # Reserva el 20 % para pruebas y usa el 80 % para entrenamiento.
-    random_state=42,  # Repite la misma división cada vez que se ejecuta el código.
+    test_size=0.2,    # Reserva el 20 % para pruebas y usa el 80 % para entrenamiento.  # Repite la misma división cada vez que se ejecuta el código.
     stratify=y,       # Mantiene una proporción similar de ambos diagnósticos en cada grupo.
 )
 
