@@ -1,0 +1,809 @@
+{
+  "info": {
+    "name": "EventPass - Administración de Eventos",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "CRUD SOAP 1.1 con un evento de prueba. Configura las credenciales locales de un administrador y un cliente activo. Ejecuta la colección en el orden presentado."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000",
+      "type": "string"
+    },
+    {
+      "key": "adminUsuario",
+      "value": "admin",
+      "type": "string"
+    },
+    {
+      "key": "adminPassword",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "clienteUsuario",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "clientePassword",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "clienteToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "eventoId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "eventoCodigo",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "eventoFecha",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.variables.set(\"falloEsperado\", \"\");",
+          "pm.variables.unset(\"respuestaSoap\");"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const xml2js = require(\"xml2js\");",
+          "const soap = \"http://schemas.xmlsoap.org/soap/envelope/\";",
+          "const ep = \"urn:eventpass\";",
+          "const operacion = pm.request.headers.get(\"SOAPAction\").split(\"#\")[1].replace(/\"$/, \"\");",
+          "const fallo = pm.variables.get(\"falloEsperado\");",
+          "let sobre, errorXml;",
+          "xml2js.parseString(pm.response.text(), {",
+          "  xmlns: true, explicitArray: false, tagNameProcessors: [xml2js.processors.stripPrefix]",
+          "}, (error, doc) => { errorXml = error; sobre = doc && doc.Envelope; });",
+          "",
+          "pm.test(\"HTTP \" + (fallo ? 500 : 200), () => pm.response.to.have.status(fallo ? 500 : 200));",
+          "pm.test(\"Sobre y cuerpo SOAP 1.1\", () => {",
+          "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/xml/i);",
+          "  pm.expect(errorXml).to.not.exist;",
+          "  pm.expect(sobre.$ns.uri).to.equal(soap);",
+          "  pm.expect(sobre.Body.$ns.uri).to.equal(soap);",
+          "});",
+          "",
+          "function datos(nodo) {",
+          "  if (Array.isArray(nodo)) return nodo.map(datos);",
+          "  const campos = Object.keys(nodo).filter(k => k !== \"$\" && k !== \"$ns\" && k !== \"_\");",
+          "  if (!campos.length) return nodo._ || \"\";",
+          "  const valor = {};",
+          "  campos.forEach(k => { valor[k] = datos(nodo[k]); });",
+          "  return valor;",
+          "}",
+          "if (fallo) {",
+          "  pm.test(\"SOAP Fault con código \" + fallo, () => {",
+          "    const f = sobre.Body.Fault;",
+          "    pm.expect(f.$ns.uri).to.equal(soap);",
+          "    pm.expect(f.faultstring._).to.be.a(\"string\").and.not.empty;",
+          "    pm.expect(f.detail.ErrorEventPass.$ns.uri).to.equal(ep);",
+          "    pm.expect(f.detail.ErrorEventPass.codigo._).to.equal(fallo);",
+          "  });",
+          "} else {",
+          "  pm.test(\"Respuesta \" + operacion + \" sin SOAP Fault\", () => {",
+          "    pm.expect(sobre.Body.Fault).to.not.exist;",
+          "    const respuesta = sobre.Body[operacion + \"Response\"];",
+          "    pm.expect(respuesta.$ns.uri).to.equal(ep);",
+          "    pm.variables.set(\"respuestaSoap\", JSON.stringify(datos(respuesta)));",
+          "  });",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "01. Iniciar sesión como administrador",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "text/xml; charset=utf-8"
+          },
+          {
+            "key": "SOAPAction",
+            "value": "\"urn:eventpass#IniciarSesion\""
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:e=\"urn:eventpass\">\n  <s:Body>\n    <e:IniciarSesion>\n      <e:usuario>{{usuarioXml}}</e:usuario>\n      <e:password>{{passwordXml}}</e:password>\n    </e:IniciarSesion>\n  </s:Body>\n</s:Envelope>",
+          "options": {
+            "raw": {
+              "language": "xml"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/soap",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "soap"
+          ]
+        },
+        "description": "Usa las credenciales locales y guarda el JWT tras comprobar el rol."
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const escapar = valor => String(valor || \"\").replace(/[&<>\"']/g, c =>",
+              "  ({ \"&\": \"&amp;\", \"<\": \"&lt;\", \">\": \"&gt;\", '\"': \"&quot;\", \"'\": \"&apos;\" })[c]);",
+              "pm.collectionVariables.set(\"token\", \"\");",
+              "pm.variables.set(\"usuarioXml\", escapar(pm.variables.get(\"adminUsuario\")));",
+              "pm.variables.set(\"passwordXml\", escapar(pm.variables.get(\"adminPassword\")));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Sesión de ADMINISTRADOR y JWT guardado\", () => {",
+              "  const r = JSON.parse(pm.variables.get(\"respuestaSoap\"));",
+              "  pm.expect(r.usuario.rol).to.equal(\"ADMINISTRADOR\");",
+              "  pm.expect(r.usuario.estado).to.equal(\"ACTIVO\");",
+              "  pm.expect(r.token).to.match(/^[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$/);",
+              "  pm.collectionVariables.set(\"token\", r.token);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02. Crear evento",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "text/xml; charset=utf-8"
+          },
+          {
+            "key": "SOAPAction",
+            "value": "\"urn:eventpass#CrearEvento\""
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:e=\"urn:eventpass\">\n  <s:Header>\n    <e:Autenticacion><e:token>{{token}}</e:token></e:Autenticacion>\n  </s:Header>\n  <s:Body>\n    <e:CrearEvento>\n      <e:codigo>{{eventoCodigo}}</e:codigo>\n      <e:nombre>Encuentro EventPass</e:nombre>\n      <e:descripcion>Taller de servicios web con demostración SOAP.</e:descripcion>\n      <e:categoria>Conferencia</e:categoria>\n      <e:ubicacion>Auditorio Norte</e:ubicacion>\n      <e:fecha>{{eventoFecha}}</e:fecha>\n      <e:hora>18:30:00</e:hora>\n      <e:capacidad_total>40</e:capacidad_total>\n      <e:estado>ACTIVO</e:estado>\n    </e:CrearEvento>\n  </s:Body>\n</s:Envelope>",
+          "options": {
+            "raw": {
+              "language": "xml"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/soap",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "soap"
+          ]
+        },
+        "description": "Crea un evento activo 30 días en el futuro. El servidor asigna como responsable al administrador autenticado."
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.set(\"eventoId\", \"\");",
+              "pm.collectionVariables.set(\"eventoCodigo\", \"PM-\" + pm.variables.replaceIn(\"{{$guid}}\").toUpperCase());",
+              "const fecha = new Date();",
+              "fecha.setUTCDate(fecha.getUTCDate() + 30);",
+              "pm.collectionVariables.set(\"eventoFecha\", fecha.toISOString().slice(0, 10));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Evento creado con código único e ID positivo\", () => {",
+              "  const r = JSON.parse(pm.variables.get(\"respuestaSoap\"));",
+              "  pm.expect(r.evento.codigo).to.equal(pm.collectionVariables.get(\"eventoCodigo\"));",
+              "  pm.expect(r.evento.id).to.match(/^[1-9][0-9]*$/);",
+              "  pm.expect(r.evento.estado).to.equal(\"ACTIVO\");",
+              "  pm.collectionVariables.set(\"eventoId\", r.evento.id);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03. Listar eventos",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "text/xml; charset=utf-8"
+          },
+          {
+            "key": "SOAPAction",
+            "value": "\"urn:eventpass#ListarEventos\""
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:e=\"urn:eventpass\">\n  <s:Header>\n    <e:Autenticacion><e:token>{{token}}</e:token></e:Autenticacion>\n  </s:Header>\n  <s:Body>\n    <e:ListarEventos>\n      <e:gestion>true</e:gestion>\n    </e:ListarEventos>\n  </s:Body>\n</s:Envelope>",
+          "options": {
+            "raw": {
+              "language": "xml"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/soap",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "soap"
+          ]
+        },
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"El listado de gestión incluye el evento creado\", () => {",
+              "  const r = JSON.parse(pm.variables.get(\"respuestaSoap\"));",
+              "  const eventos = [].concat(r.evento || []);",
+              "  pm.expect(eventos.some(e => e.id === pm.collectionVariables.get(\"eventoId\") && e.codigo === pm.collectionVariables.get(\"eventoCodigo\"))).to.equal(true);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04. Obtener evento",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "text/xml; charset=utf-8"
+          },
+          {
+            "key": "SOAPAction",
+            "value": "\"urn:eventpass#ObtenerEvento\""
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:e=\"urn:eventpass\">\n  <s:Header>\n    <e:Autenticacion><e:token>{{token}}</e:token></e:Autenticacion>\n  </s:Header>\n  <s:Body>\n    <e:ObtenerEvento>\n      <e:id>{{eventoId}}</e:id>\n      <e:gestion>true</e:gestion>\n    </e:ObtenerEvento>\n  </s:Body>\n</s:Envelope>",
+          "options": {
+            "raw": {
+              "language": "xml"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/soap",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "soap"
+          ]
+        },
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Datos del evento creado\", () => {",
+              "  const r = JSON.parse(pm.variables.get(\"respuestaSoap\"));",
+              "  pm.expect(r.evento.id).to.equal(pm.collectionVariables.get(\"eventoId\"));",
+              "  pm.expect(r.evento.codigo).to.equal(pm.collectionVariables.get(\"eventoCodigo\"));",
+              "  pm.expect(r.evento.nombre).to.equal(\"Encuentro EventPass\");",
+              "  pm.expect(r.evento.capacidad_total).to.equal(\"40\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05. Actualizar evento",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "text/xml; charset=utf-8"
+          },
+          {
+            "key": "SOAPAction",
+            "value": "\"urn:eventpass#ActualizarEvento\""
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:e=\"urn:eventpass\">\n  <s:Header>\n    <e:Autenticacion><e:token>{{token}}</e:token></e:Autenticacion>\n  </s:Header>\n  <s:Body>\n    <e:ActualizarEvento>\n      <e:id>{{eventoId}}</e:id>\n      <e:codigo>{{eventoCodigo}}</e:codigo>\n      <e:nombre>Encuentro EventPass ampliado</e:nombre>\n      <e:descripcion>Taller de servicios web con demostración SOAP.</e:descripcion>\n      <e:categoria>Conferencia</e:categoria>\n      <e:ubicacion>Auditorio Central</e:ubicacion>\n      <e:fecha>{{eventoFecha}}</e:fecha>\n      <e:hora>18:30:00</e:hora>\n      <e:capacidad_total>60</e:capacidad_total>\n      <e:estado>ACTIVO</e:estado>\n    </e:ActualizarEvento>\n  </s:Body>\n</s:Envelope>",
+          "options": {
+            "raw": {
+              "language": "xml"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/soap",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "soap"
+          ]
+        },
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"El servidor devuelve los datos actualizados\", () => {",
+              "  const r = JSON.parse(pm.variables.get(\"respuestaSoap\"));",
+              "  pm.expect(r.evento.id).to.equal(pm.collectionVariables.get(\"eventoId\"));",
+              "  pm.expect(r.evento.codigo).to.equal(pm.collectionVariables.get(\"eventoCodigo\"));",
+              "  pm.expect(r.evento.nombre).to.equal(\"Encuentro EventPass ampliado\");",
+              "  pm.expect(r.evento.capacidad_total).to.equal(\"60\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Permisos sobre el evento de prueba",
+      "item": [
+        {
+          "name": "P0. Iniciar sesión como cliente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              },
+              {
+                "key": "SOAPAction",
+                "value": "\"urn:eventpass#IniciarSesion\""
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:e=\"urn:eventpass\">\n  <s:Body>\n    <e:IniciarSesion>\n      <e:usuario>{{usuarioXml}}</e:usuario>\n      <e:password>{{passwordXml}}</e:password>\n    </e:IniciarSesion>\n  </s:Body>\n</s:Envelope>",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/soap",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "soap"
+              ]
+            },
+            "description": "Usa las credenciales locales y guarda el JWT tras comprobar el rol."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const escapar = valor => String(valor || \"\").replace(/[&<>\"']/g, c =>",
+                  "  ({ \"&\": \"&amp;\", \"<\": \"&lt;\", \">\": \"&gt;\", '\"': \"&quot;\", \"'\": \"&apos;\" })[c]);",
+                  "pm.collectionVariables.set(\"clienteToken\", \"\");",
+                  "pm.variables.set(\"usuarioXml\", escapar(pm.variables.get(\"clienteUsuario\")));",
+                  "pm.variables.set(\"passwordXml\", escapar(pm.variables.get(\"clientePassword\")));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Sesión de CLIENTE y JWT guardado\", () => {",
+                  "  const r = JSON.parse(pm.variables.get(\"respuestaSoap\"));",
+                  "  pm.expect(r.usuario.rol).to.equal(\"CLIENTE\");",
+                  "  pm.expect(r.usuario.estado).to.equal(\"ACTIVO\");",
+                  "  pm.expect(r.token).to.match(/^[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$/);",
+                  "  pm.collectionVariables.set(\"clienteToken\", r.token);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "P1. Crear sin autenticación",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              },
+              {
+                "key": "SOAPAction",
+                "value": "\"urn:eventpass#CrearEvento\""
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:e=\"urn:eventpass\">\n  <s:Body>\n    <e:CrearEvento>\n      <e:codigo>{{eventoCodigo}}</e:codigo>\n      <e:nombre>Encuentro EventPass</e:nombre>\n      <e:descripcion>Taller de servicios web con demostración SOAP.</e:descripcion>\n      <e:categoria>Conferencia</e:categoria>\n      <e:ubicacion>Auditorio Norte</e:ubicacion>\n      <e:fecha>{{eventoFecha}}</e:fecha>\n      <e:hora>18:30:00</e:hora>\n      <e:capacidad_total>40</e:capacidad_total>\n      <e:estado>ACTIVO</e:estado>\n    </e:CrearEvento>\n  </s:Body>\n</s:Envelope>",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/soap",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "soap"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set(\"falloEsperado\", \"SESION\");"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "P2. Actualizar como cliente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              },
+              {
+                "key": "SOAPAction",
+                "value": "\"urn:eventpass#ActualizarEvento\""
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:e=\"urn:eventpass\">\n  <s:Header>\n    <e:Autenticacion><e:token>{{clienteToken}}</e:token></e:Autenticacion>\n  </s:Header>\n  <s:Body>\n    <e:ActualizarEvento>\n      <e:id>{{eventoId}}</e:id>\n      <e:codigo>{{eventoCodigo}}</e:codigo>\n      <e:nombre>Cambio sin permiso</e:nombre>\n      <e:descripcion>Taller de servicios web con demostración SOAP.</e:descripcion>\n      <e:categoria>Conferencia</e:categoria>\n      <e:ubicacion>Otra sala</e:ubicacion>\n      <e:fecha>{{eventoFecha}}</e:fecha>\n      <e:hora>18:30:00</e:hora>\n      <e:capacidad_total>10</e:capacidad_total>\n      <e:estado>ACTIVO</e:estado>\n    </e:ActualizarEvento>\n  </s:Body>\n</s:Envelope>",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/soap",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "soap"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set(\"falloEsperado\", \"PERMISO\");"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "P3. Eliminar como cliente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              },
+              {
+                "key": "SOAPAction",
+                "value": "\"urn:eventpass#EliminarEvento\""
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:e=\"urn:eventpass\">\n  <s:Header>\n    <e:Autenticacion><e:token>{{clienteToken}}</e:token></e:Autenticacion>\n  </s:Header>\n  <s:Body>\n    <e:EliminarEvento>\n      <e:id>{{eventoId}}</e:id>\n    </e:EliminarEvento>\n  </s:Body>\n</s:Envelope>",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/soap",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "soap"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set(\"falloEsperado\", \"PERMISO\");"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "P4. Consultar con JWT inválido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              },
+              {
+                "key": "SOAPAction",
+                "value": "\"urn:eventpass#ObtenerEvento\""
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:e=\"urn:eventpass\">\n  <s:Header>\n    <e:Autenticacion><e:token>jwt-invalido-de-prueba</e:token></e:Autenticacion>\n  </s:Header>\n  <s:Body>\n    <e:ObtenerEvento>\n      <e:id>{{eventoId}}</e:id>\n      <e:gestion>true</e:gestion>\n    </e:ObtenerEvento>\n  </s:Body>\n</s:Envelope>",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/soap",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "soap"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set(\"falloEsperado\", \"SESION\");"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05b. Verificar la actualización guardada",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "text/xml; charset=utf-8"
+          },
+          {
+            "key": "SOAPAction",
+            "value": "\"urn:eventpass#ObtenerEvento\""
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:e=\"urn:eventpass\">\n  <s:Header>\n    <e:Autenticacion><e:token>{{token}}</e:token></e:Autenticacion>\n  </s:Header>\n  <s:Body>\n    <e:ObtenerEvento>\n      <e:id>{{eventoId}}</e:id>\n      <e:gestion>true</e:gestion>\n    </e:ObtenerEvento>\n  </s:Body>\n</s:Envelope>",
+          "options": {
+            "raw": {
+              "language": "xml"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/soap",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "soap"
+          ]
+        },
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"El nombre, la ubicación y el aforo persisten\", () => {",
+              "  const r = JSON.parse(pm.variables.get(\"respuestaSoap\"));",
+              "  pm.expect(r.evento.id).to.equal(pm.collectionVariables.get(\"eventoId\"));",
+              "  pm.expect(r.evento.codigo).to.equal(pm.collectionVariables.get(\"eventoCodigo\"));",
+              "  pm.expect(r.evento.nombre).to.equal(\"Encuentro EventPass ampliado\");",
+              "  pm.expect(r.evento.capacidad_total).to.equal(\"60\");",
+              "  pm.expect(r.evento.ubicacion).to.equal(\"Auditorio Central\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06. Eliminar evento",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "text/xml; charset=utf-8"
+          },
+          {
+            "key": "SOAPAction",
+            "value": "\"urn:eventpass#EliminarEvento\""
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:e=\"urn:eventpass\">\n  <s:Header>\n    <e:Autenticacion><e:token>{{token}}</e:token></e:Autenticacion>\n  </s:Header>\n  <s:Body>\n    <e:EliminarEvento>\n      <e:id>{{eventoId}}</e:id>\n    </e:EliminarEvento>\n  </s:Body>\n</s:Envelope>",
+          "options": {
+            "raw": {
+              "language": "xml"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/soap",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "soap"
+          ]
+        },
+        "description": "El evento de esta ejecución no tiene localidades ni ventas asociadas."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"El servidor confirma el ID eliminado\", () => {",
+              "  const r = JSON.parse(pm.variables.get(\"respuestaSoap\"));",
+              "  pm.expect(r.id).to.equal(pm.collectionVariables.get(\"eventoId\"));",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06b. Comprobar la baja",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "text/xml; charset=utf-8"
+          },
+          {
+            "key": "SOAPAction",
+            "value": "\"urn:eventpass#ObtenerEvento\""
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:e=\"urn:eventpass\">\n  <s:Header>\n    <e:Autenticacion><e:token>{{token}}</e:token></e:Autenticacion>\n  </s:Header>\n  <s:Body>\n    <e:ObtenerEvento>\n      <e:id>{{eventoId}}</e:id>\n      <e:gestion>true</e:gestion>\n    </e:ObtenerEvento>\n  </s:Body>\n</s:Envelope>",
+          "options": {
+            "raw": {
+              "language": "xml"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/soap",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "soap"
+          ]
+        },
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.variables.set(\"falloEsperado\", \"NO_ENCONTRADO\");"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,575 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions name="EventPassService" targetNamespace="urn:eventpass" xmlns="http://schemas.xmlsoap.org/wsdl/" xmlns:tns="urn:eventpass" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <types>
+    <xsd:schema targetNamespace="urn:eventpass" elementFormDefault="qualified">
+      <xsd:complexType name="Usuario"><xsd:all>
+          <xsd:element name="id" type="xsd:int"/>
+          <xsd:element name="identificacion" type="xsd:string"/>
+          <xsd:element name="nombre" type="xsd:string"/>
+          <xsd:element name="usuario" type="xsd:string"/>
+          <xsd:element name="rol" type="xsd:string"/>
+          <xsd:element name="estado" type="xsd:string"/>
+          <xsd:element name="creado_en" type="xsd:dateTime"/>
+          <xsd:element name="actualizado_en" type="xsd:dateTime"/>
+        </xsd:all></xsd:complexType>
+      <xsd:complexType name="Evento"><xsd:all>
+          <xsd:element name="id" type="xsd:int"/>
+          <xsd:element name="codigo" type="xsd:string"/>
+          <xsd:element name="organizador_id" type="xsd:int"/>
+          <xsd:element name="organizador_nombre" type="xsd:string"/>
+          <xsd:element name="nombre" type="xsd:string"/>
+          <xsd:element name="descripcion" type="xsd:string"/>
+          <xsd:element name="categoria" type="xsd:string"/>
+          <xsd:element name="ubicacion" type="xsd:string"/>
+          <xsd:element name="fecha" type="xsd:date"/>
+          <xsd:element name="hora" type="xsd:time"/>
+          <xsd:element name="capacidad_total" type="xsd:int"/>
+          <xsd:element name="estado" type="xsd:string"/>
+          <xsd:element name="creado_en" type="xsd:dateTime"/>
+          <xsd:element name="actualizado_en" type="xsd:dateTime"/>
+          <xsd:element name="disponibles" type="xsd:int"/>
+          <xsd:element name="precio_desde" type="xsd:decimal" minOccurs="0"/>
+        </xsd:all></xsd:complexType>
+      <xsd:complexType name="TipoEntrada"><xsd:all>
+          <xsd:element name="id" type="xsd:int"/>
+          <xsd:element name="evento_id" type="xsd:int"/>
+          <xsd:element name="nombre" type="xsd:string"/>
+          <xsd:element name="precio" type="xsd:decimal"/>
+          <xsd:element name="capacidad_asignada" type="xsd:int"/>
+          <xsd:element name="cantidad_disponible" type="xsd:int"/>
+          <xsd:element name="estado" type="xsd:string"/>
+          <xsd:element name="creado_en" type="xsd:dateTime"/>
+          <xsd:element name="evento_nombre" type="xsd:string"/>
+        </xsd:all></xsd:complexType>
+      <xsd:complexType name="Compra"><xsd:all>
+          <xsd:element name="id" type="xsd:int"/>
+          <xsd:element name="codigo" type="xsd:string"/>
+          <xsd:element name="cliente_id" type="xsd:int"/>
+          <xsd:element name="cliente_nombre" type="xsd:string"/>
+          <xsd:element name="usuario_responsable_id" type="xsd:int" minOccurs="0"/>
+          <xsd:element name="tipo_entrada_id" type="xsd:int"/>
+          <xsd:element name="tipo_nombre" type="xsd:string"/>
+          <xsd:element name="evento_id" type="xsd:int"/>
+          <xsd:element name="evento_nombre" type="xsd:string"/>
+          <xsd:element name="fecha" type="xsd:dateTime"/>
+          <xsd:element name="cantidad_entradas" type="xsd:int"/>
+          <xsd:element name="valor_total" type="xsd:decimal"/>
+          <xsd:element name="estado" type="xsd:string"/>
+          <xsd:element name="vigentes" type="xsd:int"/>
+        </xsd:all></xsd:complexType>
+      <xsd:complexType name="Entrada"><xsd:all>
+          <xsd:element name="id" type="xsd:int"/>
+          <xsd:element name="codigo" type="xsd:string"/>
+          <xsd:element name="compra_id" type="xsd:int"/>
+          <xsd:element name="compra_codigo" type="xsd:string"/>
+          <xsd:element name="evento_id" type="xsd:int"/>
+          <xsd:element name="evento_nombre" type="xsd:string"/>
+          <xsd:element name="evento_fecha" type="xsd:date"/>
+          <xsd:element name="evento_hora" type="xsd:time"/>
+          <xsd:element name="ubicacion" type="xsd:string"/>
+          <xsd:element name="tipo_entrada_id" type="xsd:int"/>
+          <xsd:element name="tipo_nombre" type="xsd:string"/>
+          <xsd:element name="precio_pagado" type="xsd:decimal"/>
+          <xsd:element name="fecha_generacion" type="xsd:dateTime"/>
+          <xsd:element name="estado" type="xsd:string"/>
+        </xsd:all></xsd:complexType>
+      <xsd:element name="Autenticacion"><xsd:complexType><xsd:all>
+          <xsd:element name="token" type="xsd:string"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="ErrorEventPass"><xsd:complexType><xsd:all>
+          <xsd:element name="codigo" type="xsd:string"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="IniciarSesion"><xsd:complexType><xsd:all>
+          <xsd:element name="usuario" type="xsd:string"/>
+          <xsd:element name="password" type="xsd:string"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="IniciarSesionResponse"><xsd:complexType><xsd:all>
+          <xsd:element name="usuario" type="tns:Usuario"/>
+          <xsd:element name="token" type="xsd:string"/>
+          <xsd:element name="expira_en" type="xsd:dateTime"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="RegistrarUsuario"><xsd:complexType><xsd:all>
+          <xsd:element name="identificacion" type="xsd:string"/>
+          <xsd:element name="nombre" type="xsd:string"/>
+          <xsd:element name="usuario" type="xsd:string"/>
+          <xsd:element name="password" type="xsd:string"/>
+          <xsd:element name="rol" type="xsd:string" minOccurs="0">
+            <xsd:annotation><xsd:documentation>Se ignora. El alta pública siempre asigna CLIENTE.</xsd:documentation></xsd:annotation>
+          </xsd:element>
+          <xsd:element name="estado" type="xsd:string" minOccurs="0">
+            <xsd:annotation><xsd:documentation>Se ignora. El estado inicial siempre es ACTIVO.</xsd:documentation></xsd:annotation>
+          </xsd:element>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="RegistrarUsuarioResponse"><xsd:complexType><xsd:all>
+          <xsd:element name="usuario" type="tns:Usuario"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="CrearUsuario"><xsd:complexType><xsd:all>
+          <xsd:element name="identificacion" type="xsd:string"/>
+          <xsd:element name="nombre" type="xsd:string"/>
+          <xsd:element name="usuario" type="xsd:string"/>
+          <xsd:element name="password" type="xsd:string"/>
+          <xsd:element name="rol" type="xsd:string"/>
+          <xsd:element name="estado" type="xsd:string" minOccurs="0"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="CrearUsuarioResponse"><xsd:complexType><xsd:all>
+          <xsd:element name="usuario" type="tns:Usuario"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="ListarUsuarios"><xsd:complexType></xsd:complexType></xsd:element>
+      <xsd:element name="ListarUsuariosResponse"><xsd:complexType><xsd:sequence>
+          <xsd:element name="usuario" type="tns:Usuario" minOccurs="0" maxOccurs="unbounded"/>
+        </xsd:sequence></xsd:complexType></xsd:element>
+      <xsd:element name="ObtenerUsuario"><xsd:complexType><xsd:all>
+          <xsd:element name="id" type="xsd:int"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="ObtenerUsuarioResponse"><xsd:complexType><xsd:all>
+          <xsd:element name="usuario" type="tns:Usuario"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="ActualizarUsuario"><xsd:complexType><xsd:all>
+          <xsd:element name="id" type="xsd:int"/>
+          <xsd:element name="identificacion" type="xsd:string"/>
+          <xsd:element name="nombre" type="xsd:string"/>
+          <xsd:element name="usuario" type="xsd:string"/>
+          <xsd:element name="password" type="xsd:string" minOccurs="0"/>
+          <xsd:element name="rol" type="xsd:string"/>
+          <xsd:element name="estado" type="xsd:string" minOccurs="0"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="ActualizarUsuarioResponse"><xsd:complexType><xsd:all>
+          <xsd:element name="usuario" type="tns:Usuario"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="EliminarUsuario"><xsd:complexType><xsd:all>
+          <xsd:element name="id" type="xsd:int"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="EliminarUsuarioResponse"><xsd:complexType><xsd:all>
+          <xsd:element name="id" type="xsd:int"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="CrearEvento"><xsd:complexType><xsd:all>
+          <xsd:element name="codigo" type="xsd:string"/>
+          <xsd:element name="organizador_id" type="xsd:int" minOccurs="0"/>
+          <xsd:element name="nombre" type="xsd:string"/>
+          <xsd:element name="descripcion" type="xsd:string"/>
+          <xsd:element name="categoria" type="xsd:string"/>
+          <xsd:element name="ubicacion" type="xsd:string"/>
+          <xsd:element name="fecha" type="xsd:date"/>
+          <xsd:element name="hora" type="xsd:time"/>
+          <xsd:element name="capacidad_total" type="xsd:int"/>
+          <xsd:element name="estado" type="xsd:string" minOccurs="0"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="CrearEventoResponse"><xsd:complexType><xsd:all>
+          <xsd:element name="evento" type="tns:Evento"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="ListarEventos"><xsd:complexType><xsd:all>
+          <xsd:element name="gestion" type="xsd:boolean" minOccurs="0"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="ListarEventosResponse"><xsd:complexType><xsd:sequence>
+          <xsd:element name="evento" type="tns:Evento" minOccurs="0" maxOccurs="unbounded"/>
+        </xsd:sequence></xsd:complexType></xsd:element>
+      <xsd:element name="ObtenerEvento"><xsd:complexType><xsd:all>
+          <xsd:element name="id" type="xsd:int"/>
+          <xsd:element name="gestion" type="xsd:boolean" minOccurs="0"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="ObtenerEventoResponse"><xsd:complexType><xsd:all>
+          <xsd:element name="evento" type="tns:Evento"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="ActualizarEvento"><xsd:complexType><xsd:all>
+          <xsd:element name="id" type="xsd:int"/>
+          <xsd:element name="codigo" type="xsd:string"/>
+          <xsd:element name="organizador_id" type="xsd:int" minOccurs="0"/>
+          <xsd:element name="nombre" type="xsd:string"/>
+          <xsd:element name="descripcion" type="xsd:string"/>
+          <xsd:element name="categoria" type="xsd:string"/>
+          <xsd:element name="ubicacion" type="xsd:string"/>
+          <xsd:element name="fecha" type="xsd:date"/>
+          <xsd:element name="hora" type="xsd:time"/>
+          <xsd:element name="capacidad_total" type="xsd:int"/>
+          <xsd:element name="estado" type="xsd:string" minOccurs="0"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="ActualizarEventoResponse"><xsd:complexType><xsd:all>
+          <xsd:element name="evento" type="tns:Evento"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="EliminarEvento"><xsd:complexType><xsd:all>
+          <xsd:element name="id" type="xsd:int"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="EliminarEventoResponse"><xsd:complexType><xsd:all>
+          <xsd:element name="id" type="xsd:int"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="CrearTipoEntrada"><xsd:complexType><xsd:all>
+          <xsd:element name="evento_id" type="xsd:int"/>
+          <xsd:element name="nombre" type="xsd:string"/>
+          <xsd:element name="precio" type="xsd:decimal"/>
+          <xsd:element name="capacidad_asignada" type="xsd:int"/>
+          <xsd:element name="estado" type="xsd:string" minOccurs="0"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="CrearTipoEntradaResponse"><xsd:complexType><xsd:all>
+          <xsd:element name="tipo" type="tns:TipoEntrada"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="ListarTiposEntrada"><xsd:complexType><xsd:all>
+          <xsd:element name="evento_id" type="xsd:int" minOccurs="0"/>
+          <xsd:element name="gestion" type="xsd:boolean" minOccurs="0"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="ListarTiposEntradaResponse"><xsd:complexType><xsd:sequence>
+          <xsd:element name="tipo" type="tns:TipoEntrada" minOccurs="0" maxOccurs="unbounded"/>
+        </xsd:sequence></xsd:complexType></xsd:element>
+      <xsd:element name="ObtenerTipoEntrada"><xsd:complexType><xsd:all>
+          <xsd:element name="id" type="xsd:int"/>
+          <xsd:element name="gestion" type="xsd:boolean" minOccurs="0"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="ObtenerTipoEntradaResponse"><xsd:complexType><xsd:all>
+          <xsd:element name="tipo" type="tns:TipoEntrada"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="ActualizarTipoEntrada"><xsd:complexType><xsd:all>
+          <xsd:element name="id" type="xsd:int"/>
+          <xsd:element name="nombre" type="xsd:string"/>
+          <xsd:element name="precio" type="xsd:decimal"/>
+          <xsd:element name="capacidad_asignada" type="xsd:int"/>
+          <xsd:element name="estado" type="xsd:string" minOccurs="0"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="ActualizarTipoEntradaResponse"><xsd:complexType><xsd:all>
+          <xsd:element name="tipo" type="tns:TipoEntrada"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="EliminarTipoEntrada"><xsd:complexType><xsd:all>
+          <xsd:element name="id" type="xsd:int"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="EliminarTipoEntradaResponse"><xsd:complexType><xsd:all>
+          <xsd:element name="id" type="xsd:int"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="CrearCompra"><xsd:complexType><xsd:all>
+          <xsd:element name="cliente_id" type="xsd:int" minOccurs="0"/>
+          <xsd:element name="tipo_entrada_id" type="xsd:int"/>
+          <xsd:element name="cantidad" type="xsd:int"/>
+          <xsd:element name="solicitud_id" type="xsd:string"/>
+          <xsd:element name="precio_esperado" type="xsd:decimal" minOccurs="0"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="CrearCompraResponse"><xsd:complexType><xsd:sequence>
+          <xsd:element name="compra" type="tns:Compra"/>
+          <xsd:element name="entrada" type="tns:Entrada" minOccurs="0" maxOccurs="unbounded"/>
+        </xsd:sequence></xsd:complexType></xsd:element>
+      <xsd:element name="ListarCompras"><xsd:complexType><xsd:all>
+          <xsd:element name="evento_id" type="xsd:int" minOccurs="0"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="ListarComprasResponse"><xsd:complexType><xsd:sequence>
+          <xsd:element name="compra" type="tns:Compra" minOccurs="0" maxOccurs="unbounded"/>
+        </xsd:sequence></xsd:complexType></xsd:element>
+      <xsd:element name="ObtenerCompra"><xsd:complexType><xsd:all>
+          <xsd:element name="id" type="xsd:int"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="ObtenerCompraResponse"><xsd:complexType><xsd:sequence>
+          <xsd:element name="compra" type="tns:Compra"/>
+          <xsd:element name="entrada" type="tns:Entrada" minOccurs="0" maxOccurs="unbounded"/>
+        </xsd:sequence></xsd:complexType></xsd:element>
+      <xsd:element name="ActualizarCompra"><xsd:complexType><xsd:all>
+          <xsd:element name="id" type="xsd:int"/>
+          <xsd:element name="estado" type="xsd:string" minOccurs="0"/>
+          <xsd:element name="usuario_responsable_id" type="xsd:int" minOccurs="0"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="ActualizarCompraResponse"><xsd:complexType><xsd:all>
+          <xsd:element name="compra" type="tns:Compra"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="EliminarCompra"><xsd:complexType><xsd:all>
+          <xsd:element name="id" type="xsd:int"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="EliminarCompraResponse"><xsd:complexType><xsd:all>
+          <xsd:element name="compra" type="tns:Compra"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="CrearEntrada"><xsd:complexType><xsd:all>
+          <xsd:element name="entrada_origen_id" type="xsd:int"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="CrearEntradaResponse"><xsd:complexType><xsd:all>
+          <xsd:element name="entrada" type="tns:Entrada"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="ListarEntradas"><xsd:complexType><xsd:all>
+          <xsd:element name="evento_id" type="xsd:int" minOccurs="0"/>
+          <xsd:element name="compra_id" type="xsd:int" minOccurs="0"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="ListarEntradasResponse"><xsd:complexType><xsd:sequence>
+          <xsd:element name="entrada" type="tns:Entrada" minOccurs="0" maxOccurs="unbounded"/>
+        </xsd:sequence></xsd:complexType></xsd:element>
+      <xsd:element name="ObtenerEntrada"><xsd:complexType><xsd:all>
+          <xsd:element name="id" type="xsd:int"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="ObtenerEntradaResponse"><xsd:complexType><xsd:all>
+          <xsd:element name="entrada" type="tns:Entrada"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="ActualizarEntrada"><xsd:complexType><xsd:all>
+          <xsd:element name="id" type="xsd:int"/>
+          <xsd:element name="estado" type="xsd:string"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="ActualizarEntradaResponse"><xsd:complexType><xsd:all>
+          <xsd:element name="entrada" type="tns:Entrada"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="EliminarEntrada"><xsd:complexType><xsd:all>
+          <xsd:element name="id" type="xsd:int"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="EliminarEntradaResponse"><xsd:complexType><xsd:all>
+          <xsd:element name="entrada" type="tns:Entrada"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="ValidarEntrada"><xsd:complexType><xsd:all>
+          <xsd:element name="codigo" type="xsd:string"/>
+        </xsd:all></xsd:complexType></xsd:element>
+      <xsd:element name="ValidarEntradaResponse"><xsd:complexType><xsd:all>
+          <xsd:element name="entrada" type="tns:Entrada"/>
+        </xsd:all></xsd:complexType></xsd:element>
+    </xsd:schema>
+  </types>
+  <message name="Cabecera"><part name="credenciales" element="tns:Autenticacion"/></message>
+  <message name="Fallo"><part name="error" element="tns:ErrorEventPass"/></message>
+  <message name="IniciarSesionInput"><part name="parameters" element="tns:IniciarSesion"/></message>
+  <message name="IniciarSesionOutput"><part name="parameters" element="tns:IniciarSesionResponse"/></message>
+  <message name="RegistrarUsuarioInput"><part name="parameters" element="tns:RegistrarUsuario"/></message>
+  <message name="RegistrarUsuarioOutput"><part name="parameters" element="tns:RegistrarUsuarioResponse"/></message>
+  <message name="CrearUsuarioInput"><part name="parameters" element="tns:CrearUsuario"/></message>
+  <message name="CrearUsuarioOutput"><part name="parameters" element="tns:CrearUsuarioResponse"/></message>
+  <message name="ListarUsuariosInput"><part name="parameters" element="tns:ListarUsuarios"/></message>
+  <message name="ListarUsuariosOutput"><part name="parameters" element="tns:ListarUsuariosResponse"/></message>
+  <message name="ObtenerUsuarioInput"><part name="parameters" element="tns:ObtenerUsuario"/></message>
+  <message name="ObtenerUsuarioOutput"><part name="parameters" element="tns:ObtenerUsuarioResponse"/></message>
+  <message name="ActualizarUsuarioInput"><part name="parameters" element="tns:ActualizarUsuario"/></message>
+  <message name="ActualizarUsuarioOutput"><part name="parameters" element="tns:ActualizarUsuarioResponse"/></message>
+  <message name="EliminarUsuarioInput"><part name="parameters" element="tns:EliminarUsuario"/></message>
+  <message name="EliminarUsuarioOutput"><part name="parameters" element="tns:EliminarUsuarioResponse"/></message>
+  <message name="CrearEventoInput"><part name="parameters" element="tns:CrearEvento"/></message>
+  <message name="CrearEventoOutput"><part name="parameters" element="tns:CrearEventoResponse"/></message>
+  <message name="ListarEventosInput"><part name="parameters" element="tns:ListarEventos"/></message>
+  <message name="ListarEventosOutput"><part name="parameters" element="tns:ListarEventosResponse"/></message>
+  <message name="ObtenerEventoInput"><part name="parameters" element="tns:ObtenerEvento"/></message>
+  <message name="ObtenerEventoOutput"><part name="parameters" element="tns:ObtenerEventoResponse"/></message>
+  <message name="ActualizarEventoInput"><part name="parameters" element="tns:ActualizarEvento"/></message>
+  <message name="ActualizarEventoOutput"><part name="parameters" element="tns:ActualizarEventoResponse"/></message>
+  <message name="EliminarEventoInput"><part name="parameters" element="tns:EliminarEvento"/></message>
+  <message name="EliminarEventoOutput"><part name="parameters" element="tns:EliminarEventoResponse"/></message>
+  <message name="CrearTipoEntradaInput"><part name="parameters" element="tns:CrearTipoEntrada"/></message>
+  <message name="CrearTipoEntradaOutput"><part name="parameters" element="tns:CrearTipoEntradaResponse"/></message>
+  <message name="ListarTiposEntradaInput"><part name="parameters" element="tns:ListarTiposEntrada"/></message>
+  <message name="ListarTiposEntradaOutput"><part name="parameters" element="tns:ListarTiposEntradaResponse"/></message>
+  <message name="ObtenerTipoEntradaInput"><part name="parameters" element="tns:ObtenerTipoEntrada"/></message>
+  <message name="ObtenerTipoEntradaOutput"><part name="parameters" element="tns:ObtenerTipoEntradaResponse"/></message>
+  <message name="ActualizarTipoEntradaInput"><part name="parameters" element="tns:ActualizarTipoEntrada"/></message>
+  <message name="ActualizarTipoEntradaOutput"><part name="parameters" element="tns:ActualizarTipoEntradaResponse"/></message>
+  <message name="EliminarTipoEntradaInput"><part name="parameters" element="tns:EliminarTipoEntrada"/></message>
+  <message name="EliminarTipoEntradaOutput"><part name="parameters" element="tns:EliminarTipoEntradaResponse"/></message>
+  <message name="CrearCompraInput"><part name="parameters" element="tns:CrearCompra"/></message>
+  <message name="CrearCompraOutput"><part name="parameters" element="tns:CrearCompraResponse"/></message>
+  <message name="ListarComprasInput"><part name="parameters" element="tns:ListarCompras"/></message>
+  <message name="ListarComprasOutput"><part name="parameters" element="tns:ListarComprasResponse"/></message>
+  <message name="ObtenerCompraInput"><part name="parameters" element="tns:ObtenerCompra"/></message>
+  <message name="ObtenerCompraOutput"><part name="parameters" element="tns:ObtenerCompraResponse"/></message>
+  <message name="ActualizarCompraInput"><part name="parameters" element="tns:ActualizarCompra"/></message>
+  <message name="ActualizarCompraOutput"><part name="parameters" element="tns:ActualizarCompraResponse"/></message>
+  <message name="EliminarCompraInput"><part name="parameters" element="tns:EliminarCompra"/></message>
+  <message name="EliminarCompraOutput"><part name="parameters" element="tns:EliminarCompraResponse"/></message>
+  <message name="CrearEntradaInput"><part name="parameters" element="tns:CrearEntrada"/></message>
+  <message name="CrearEntradaOutput"><part name="parameters" element="tns:CrearEntradaResponse"/></message>
+  <message name="ListarEntradasInput"><part name="parameters" element="tns:ListarEntradas"/></message>
+  <message name="ListarEntradasOutput"><part name="parameters" element="tns:ListarEntradasResponse"/></message>
+  <message name="ObtenerEntradaInput"><part name="parameters" element="tns:ObtenerEntrada"/></message>
+  <message name="ObtenerEntradaOutput"><part name="parameters" element="tns:ObtenerEntradaResponse"/></message>
+  <message name="ActualizarEntradaInput"><part name="parameters" element="tns:ActualizarEntrada"/></message>
+  <message name="ActualizarEntradaOutput"><part name="parameters" element="tns:ActualizarEntradaResponse"/></message>
+  <message name="EliminarEntradaInput"><part name="parameters" element="tns:EliminarEntrada"/></message>
+  <message name="EliminarEntradaOutput"><part name="parameters" element="tns:EliminarEntradaResponse"/></message>
+  <message name="ValidarEntradaInput"><part name="parameters" element="tns:ValidarEntrada"/></message>
+  <message name="ValidarEntradaOutput"><part name="parameters" element="tns:ValidarEntradaResponse"/></message>
+  <portType name="EventPassPortType">
+    <operation name="IniciarSesion"><input message="tns:IniciarSesionInput"/><output message="tns:IniciarSesionOutput"/><fault name="ErrorEventPass" message="tns:Fallo"/></operation>
+    <operation name="RegistrarUsuario"><input message="tns:RegistrarUsuarioInput"/><output message="tns:RegistrarUsuarioOutput"/><fault name="ErrorEventPass" message="tns:Fallo"/></operation>
+    <operation name="CrearUsuario"><input message="tns:CrearUsuarioInput"/><output message="tns:CrearUsuarioOutput"/><fault name="ErrorEventPass" message="tns:Fallo"/></operation>
+    <operation name="ListarUsuarios"><input message="tns:ListarUsuariosInput"/><output message="tns:ListarUsuariosOutput"/><fault name="ErrorEventPass" message="tns:Fallo"/></operation>
+    <operation name="ObtenerUsuario"><input message="tns:ObtenerUsuarioInput"/><output message="tns:ObtenerUsuarioOutput"/><fault name="ErrorEventPass" message="tns:Fallo"/></operation>
+    <operation name="ActualizarUsuario"><input message="tns:ActualizarUsuarioInput"/><output message="tns:ActualizarUsuarioOutput"/><fault name="ErrorEventPass" message="tns:Fallo"/></operation>
+    <operation name="EliminarUsuario"><input message="tns:EliminarUsuarioInput"/><output message="tns:EliminarUsuarioOutput"/><fault name="ErrorEventPass" message="tns:Fallo"/></operation>
+    <operation name="CrearEvento"><input message="tns:CrearEventoInput"/><output message="tns:CrearEventoOutput"/><fault name="ErrorEventPass" message="tns:Fallo"/></operation>
+    <operation name="ListarEventos"><input message="tns:ListarEventosInput"/><output message="tns:ListarEventosOutput"/><fault name="ErrorEventPass" message="tns:Fallo"/></operation>
+    <operation name="ObtenerEvento"><input message="tns:ObtenerEventoInput"/><output message="tns:ObtenerEventoOutput"/><fault name="ErrorEventPass" message="tns:Fallo"/></operation>
+    <operation name="ActualizarEvento"><input message="tns:ActualizarEventoInput"/><output message="tns:ActualizarEventoOutput"/><fault name="ErrorEventPass" message="tns:Fallo"/></operation>
+    <operation name="EliminarEvento"><input message="tns:EliminarEventoInput"/><output message="tns:EliminarEventoOutput"/><fault name="ErrorEventPass" message="tns:Fallo"/></operation>
+    <operation name="CrearTipoEntrada"><input message="tns:CrearTipoEntradaInput"/><output message="tns:CrearTipoEntradaOutput"/><fault name="ErrorEventPass" message="tns:Fallo"/></operation>
+    <operation name="ListarTiposEntrada"><input message="tns:ListarTiposEntradaInput"/><output message="tns:ListarTiposEntradaOutput"/><fault name="ErrorEventPass" message="tns:Fallo"/></operation>
+    <operation name="ObtenerTipoEntrada"><input message="tns:ObtenerTipoEntradaInput"/><output message="tns:ObtenerTipoEntradaOutput"/><fault name="ErrorEventPass" message="tns:Fallo"/></operation>
+    <operation name="ActualizarTipoEntrada"><input message="tns:ActualizarTipoEntradaInput"/><output message="tns:ActualizarTipoEntradaOutput"/><fault name="ErrorEventPass" message="tns:Fallo"/></operation>
+    <operation name="EliminarTipoEntrada"><input message="tns:EliminarTipoEntradaInput"/><output message="tns:EliminarTipoEntradaOutput"/><fault name="ErrorEventPass" message="tns:Fallo"/></operation>
+    <operation name="CrearCompra"><input message="tns:CrearCompraInput"/><output message="tns:CrearCompraOutput"/><fault name="ErrorEventPass" message="tns:Fallo"/></operation>
+    <operation name="ListarCompras"><input message="tns:ListarComprasInput"/><output message="tns:ListarComprasOutput"/><fault name="ErrorEventPass" message="tns:Fallo"/></operation>
+    <operation name="ObtenerCompra"><input message="tns:ObtenerCompraInput"/><output message="tns:ObtenerCompraOutput"/><fault name="ErrorEventPass" message="tns:Fallo"/></operation>
+    <operation name="ActualizarCompra"><input message="tns:ActualizarCompraInput"/><output message="tns:ActualizarCompraOutput"/><fault name="ErrorEventPass" message="tns:Fallo"/></operation>
+    <operation name="EliminarCompra"><input message="tns:EliminarCompraInput"/><output message="tns:EliminarCompraOutput"/><fault name="ErrorEventPass" message="tns:Fallo"/></operation>
+    <operation name="CrearEntrada"><input message="tns:CrearEntradaInput"/><output message="tns:CrearEntradaOutput"/><fault name="ErrorEventPass" message="tns:Fallo"/></operation>
+    <operation name="ListarEntradas"><input message="tns:ListarEntradasInput"/><output message="tns:ListarEntradasOutput"/><fault name="ErrorEventPass" message="tns:Fallo"/></operation>
+    <operation name="ObtenerEntrada"><input message="tns:ObtenerEntradaInput"/><output message="tns:ObtenerEntradaOutput"/><fault name="ErrorEventPass" message="tns:Fallo"/></operation>
+    <operation name="ActualizarEntrada"><input message="tns:ActualizarEntradaInput"/><output message="tns:ActualizarEntradaOutput"/><fault name="ErrorEventPass" message="tns:Fallo"/></operation>
+    <operation name="EliminarEntrada"><input message="tns:EliminarEntradaInput"/><output message="tns:EliminarEntradaOutput"/><fault name="ErrorEventPass" message="tns:Fallo"/></operation>
+    <operation name="ValidarEntrada"><input message="tns:ValidarEntradaInput"/><output message="tns:ValidarEntradaOutput"/><fault name="ErrorEventPass" message="tns:Fallo"/></operation>
+  </portType>
+  <binding name="EventPassBinding" type="tns:EventPassPortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <operation name="IniciarSesion">
+      <soap:operation soapAction="urn:eventpass#IniciarSesion"/>
+      <input><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+      <fault name="ErrorEventPass"><soap:fault name="ErrorEventPass" use="literal"/></fault>
+    </operation>
+    <operation name="RegistrarUsuario">
+      <soap:operation soapAction="urn:eventpass#RegistrarUsuario"/>
+      <input><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+      <fault name="ErrorEventPass"><soap:fault name="ErrorEventPass" use="literal"/></fault>
+    </operation>
+    <operation name="CrearUsuario">
+      <soap:operation soapAction="urn:eventpass#CrearUsuario"/>
+      <input><soap:header message="tns:Cabecera" part="credenciales" use="literal"/><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+      <fault name="ErrorEventPass"><soap:fault name="ErrorEventPass" use="literal"/></fault>
+    </operation>
+    <operation name="ListarUsuarios">
+      <soap:operation soapAction="urn:eventpass#ListarUsuarios"/>
+      <input><soap:header message="tns:Cabecera" part="credenciales" use="literal"/><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+      <fault name="ErrorEventPass"><soap:fault name="ErrorEventPass" use="literal"/></fault>
+    </operation>
+    <operation name="ObtenerUsuario">
+      <soap:operation soapAction="urn:eventpass#ObtenerUsuario"/>
+      <input><soap:header message="tns:Cabecera" part="credenciales" use="literal"/><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+      <fault name="ErrorEventPass"><soap:fault name="ErrorEventPass" use="literal"/></fault>
+    </operation>
+    <operation name="ActualizarUsuario">
+      <soap:operation soapAction="urn:eventpass#ActualizarUsuario"/>
+      <input><soap:header message="tns:Cabecera" part="credenciales" use="literal"/><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+      <fault name="ErrorEventPass"><soap:fault name="ErrorEventPass" use="literal"/></fault>
+    </operation>
+    <operation name="EliminarUsuario">
+      <soap:operation soapAction="urn:eventpass#EliminarUsuario"/>
+      <input><soap:header message="tns:Cabecera" part="credenciales" use="literal"/><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+      <fault name="ErrorEventPass"><soap:fault name="ErrorEventPass" use="literal"/></fault>
+    </operation>
+    <operation name="CrearEvento">
+      <soap:operation soapAction="urn:eventpass#CrearEvento"/>
+      <input><soap:header message="tns:Cabecera" part="credenciales" use="literal"/><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+      <fault name="ErrorEventPass"><soap:fault name="ErrorEventPass" use="literal"/></fault>
+    </operation>
+    <operation name="ListarEventos">
+      <soap:operation soapAction="urn:eventpass#ListarEventos"/>
+      <input><soap:header message="tns:Cabecera" part="credenciales" use="literal"/><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+      <fault name="ErrorEventPass"><soap:fault name="ErrorEventPass" use="literal"/></fault>
+    </operation>
+    <operation name="ObtenerEvento">
+      <soap:operation soapAction="urn:eventpass#ObtenerEvento"/>
+      <input><soap:header message="tns:Cabecera" part="credenciales" use="literal"/><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+      <fault name="ErrorEventPass"><soap:fault name="ErrorEventPass" use="literal"/></fault>
+    </operation>
+    <operation name="ActualizarEvento">
+      <soap:operation soapAction="urn:eventpass#ActualizarEvento"/>
+      <input><soap:header message="tns:Cabecera" part="credenciales" use="literal"/><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+      <fault name="ErrorEventPass"><soap:fault name="ErrorEventPass" use="literal"/></fault>
+    </operation>
+    <operation name="EliminarEvento">
+      <soap:operation soapAction="urn:eventpass#EliminarEvento"/>
+      <input><soap:header message="tns:Cabecera" part="credenciales" use="literal"/><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+      <fault name="ErrorEventPass"><soap:fault name="ErrorEventPass" use="literal"/></fault>
+    </operation>
+    <operation name="CrearTipoEntrada">
+      <soap:operation soapAction="urn:eventpass#CrearTipoEntrada"/>
+      <input><soap:header message="tns:Cabecera" part="credenciales" use="literal"/><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+      <fault name="ErrorEventPass"><soap:fault name="ErrorEventPass" use="literal"/></fault>
+    </operation>
+    <operation name="ListarTiposEntrada">
+      <soap:operation soapAction="urn:eventpass#ListarTiposEntrada"/>
+      <input><soap:header message="tns:Cabecera" part="credenciales" use="literal"/><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+      <fault name="ErrorEventPass"><soap:fault name="ErrorEventPass" use="literal"/></fault>
+    </operation>
+    <operation name="ObtenerTipoEntrada">
+      <soap:operation soapAction="urn:eventpass#ObtenerTipoEntrada"/>
+      <input><soap:header message="tns:Cabecera" part="credenciales" use="literal"/><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+      <fault name="ErrorEventPass"><soap:fault name="ErrorEventPass" use="literal"/></fault>
+    </operation>
+    <operation name="ActualizarTipoEntrada">
+      <soap:operation soapAction="urn:eventpass#ActualizarTipoEntrada"/>
+      <input><soap:header message="tns:Cabecera" part="credenciales" use="literal"/><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+      <fault name="ErrorEventPass"><soap:fault name="ErrorEventPass" use="literal"/></fault>
+    </operation>
+    <operation name="EliminarTipoEntrada">
+      <soap:operation soapAction="urn:eventpass#EliminarTipoEntrada"/>
+      <input><soap:header message="tns:Cabecera" part="credenciales" use="literal"/><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+      <fault name="ErrorEventPass"><soap:fault name="ErrorEventPass" use="literal"/></fault>
+    </operation>
+    <operation name="CrearCompra">
+      <soap:operation soapAction="urn:eventpass#CrearCompra"/>
+      <input><soap:header message="tns:Cabecera" part="credenciales" use="literal"/><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+      <fault name="ErrorEventPass"><soap:fault name="ErrorEventPass" use="literal"/></fault>
+    </operation>
+    <operation name="ListarCompras">
+      <soap:operation soapAction="urn:eventpass#ListarCompras"/>
+      <input><soap:header message="tns:Cabecera" part="credenciales" use="literal"/><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+      <fault name="ErrorEventPass"><soap:fault name="ErrorEventPass" use="literal"/></fault>
+    </operation>
+    <operation name="ObtenerCompra">
+      <soap:operation soapAction="urn:eventpass#ObtenerCompra"/>
+      <input><soap:header message="tns:Cabecera" part="credenciales" use="literal"/><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+      <fault name="ErrorEventPass"><soap:fault name="ErrorEventPass" use="literal"/></fault>
+    </operation>
+    <operation name="ActualizarCompra">
+      <soap:operation soapAction="urn:eventpass#ActualizarCompra"/>
+      <input><soap:header message="tns:Cabecera" part="credenciales" use="literal"/><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+      <fault name="ErrorEventPass"><soap:fault name="ErrorEventPass" use="literal"/></fault>
+    </operation>
+    <operation name="EliminarCompra">
+      <soap:operation soapAction="urn:eventpass#EliminarCompra"/>
+      <input><soap:header message="tns:Cabecera" part="credenciales" use="literal"/><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+      <fault name="ErrorEventPass"><soap:fault name="ErrorEventPass" use="literal"/></fault>
+    </operation>
+    <operation name="CrearEntrada">
+      <soap:operation soapAction="urn:eventpass#CrearEntrada"/>
+      <input><soap:header message="tns:Cabecera" part="credenciales" use="literal"/><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+      <fault name="ErrorEventPass"><soap:fault name="ErrorEventPass" use="literal"/></fault>
+    </operation>
+    <operation name="ListarEntradas">
+      <soap:operation soapAction="urn:eventpass#ListarEntradas"/>
+      <input><soap:header message="tns:Cabecera" part="credenciales" use="literal"/><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+      <fault name="ErrorEventPass"><soap:fault name="ErrorEventPass" use="literal"/></fault>
+    </operation>
+    <operation name="ObtenerEntrada">
+      <soap:operation soapAction="urn:eventpass#ObtenerEntrada"/>
+      <input><soap:header message="tns:Cabecera" part="credenciales" use="literal"/><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+      <fault name="ErrorEventPass"><soap:fault name="ErrorEventPass" use="literal"/></fault>
+    </operation>
+    <operation name="ActualizarEntrada">
+      <soap:operation soapAction="urn:eventpass#ActualizarEntrada"/>
+      <input><soap:header message="tns:Cabecera" part="credenciales" use="literal"/><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+      <fault name="ErrorEventPass"><soap:fault name="ErrorEventPass" use="literal"/></fault>
+    </operation>
+    <operation name="EliminarEntrada">
+      <soap:operation soapAction="urn:eventpass#EliminarEntrada"/>
+      <input><soap:header message="tns:Cabecera" part="credenciales" use="literal"/><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+      <fault name="ErrorEventPass"><soap:fault name="ErrorEventPass" use="literal"/></fault>
+    </operation>
+    <operation name="ValidarEntrada">
+      <soap:operation soapAction="urn:eventpass#ValidarEntrada"/>
+      <input><soap:header message="tns:Cabecera" part="credenciales" use="literal"/><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+      <fault name="ErrorEventPass"><soap:fault name="ErrorEventPass" use="literal"/></fault>
+    </operation>
+  </binding>
+  <service name="EventPassService"><port name="EventPassPort" binding="tns:EventPassBinding">
+    <soap:address location="http://localhost:4000/soap"/>
+  </port></service>
+</definitions>
